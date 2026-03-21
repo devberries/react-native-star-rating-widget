@@ -62,7 +62,11 @@ const StarQuarter = ({ size, color, index }: Omit<StarIconProps, 'type'>) => {
   );
 };
 
-const StarThreeQuarter = ({ size, color, index }: Omit<StarIconProps, 'type'>) => {
+const StarThreeQuarter = ({
+  size,
+  color,
+  index,
+}: Omit<StarIconProps, 'type'>) => {
   const gradientId = `three-quarter-gradient-${index}`;
   return (
     <Svg height={size} viewBox="0 0 24 24" width={size}>
