@@ -52,19 +52,6 @@ export type StarRatingProps = {
      */
     enableSwiping?: boolean;
     /**
-     * Maximum allowed vertical finger drift during a swipe interaction.
-     * When this threshold is exceeded, further move events will stop affecting rating
-     * until the current gesture ends.
-     *
-     * @default 100
-     */
-    swipeVerticalThreshold?: number;
-    /**
-     * Callback that gets called with swipe activity state.
-     * Use this to disable parent ScrollView/FlatList scrolling while swiping.
-     */
-    onSwipeActiveChange?: (isActive: boolean) => void;
-    /**
      * Callback that gets called when the interaction starts, before `onChange`.
      *
      * @param rating The rating value at the start of the interaction.
@@ -136,6 +123,6 @@ export type StarRatingProps = {
      */
     accessibilityAdjustmentLabel?: string;
 };
-declare const StarRating: ({ rating, maxStars, starSize, onChange, color, emptyColor, step, enableSwiping, swipeVerticalThreshold, onSwipeActiveChange, onRatingStart, onRatingEnd, animationConfig, style, starStyle, StarIconComponent, testID, accessibilityLabel, accessabilityIncrementLabel, accessabilityDecrementLabel, accessabilityActivateLabel, accessibilityAdjustmentLabel, }: StarRatingProps) => JSX.Element;
+declare const StarRating: ({ rating, maxStars, starSize, onChange, color, emptyColor, step, enableSwiping, onRatingStart, onRatingEnd, animationConfig, style, starStyle, StarIconComponent, testID, accessibilityLabel, accessabilityIncrementLabel, accessabilityDecrementLabel, accessabilityActivateLabel, accessibilityAdjustmentLabel, }: StarRatingProps) => JSX.Element;
 export default StarRating;
 //# sourceMappingURL=StarRating.d.ts.map

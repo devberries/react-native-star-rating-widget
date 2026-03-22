@@ -5,26 +5,18 @@ import ExampleContainer from './ExampleContainer';
 
 export default function StickySwipeExample() {
   const [rating, setRating] = React.useState(3.5);
-  const [scrollEnabled, setScrollEnabled] = React.useState(true);
 
   return (
     <ExampleContainer title="Sticky Swipe + Scroll Lock">
       <Text style={styles.helperText}>
-        Swipe diagonally across stars. Vertical scrolling is paused during
-        swipe.
+        Tap or drag the stars. The rating keeps control until finger release.
       </Text>
       <ScrollView
         style={styles.scrollArea}
         contentContainerStyle={styles.scrollContent}
-        scrollEnabled={scrollEnabled}
       >
         <View style={styles.spacer} />
-        <StarRating
-          rating={rating}
-          onChange={setRating}
-          swipeVerticalThreshold={100}
-          onSwipeActiveChange={(isActive) => setScrollEnabled(!isActive)}
-        />
+        <StarRating rating={rating} onChange={setRating} />
         <View style={styles.spacer} />
       </ScrollView>
     </ExampleContainer>

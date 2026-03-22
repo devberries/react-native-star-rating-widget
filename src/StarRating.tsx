@@ -75,21 +75,6 @@ export type StarRatingProps = {
   enableSwiping?: boolean;
 
   /**
-   * Maximum allowed vertical finger drift during a swipe interaction.
-   * When this threshold is exceeded, further move events will stop affecting rating
-   * until the current gesture ends.
-   *
-   * @default 100
-   */
-  swipeVerticalThreshold?: number;
-
-  /**
-   * Callback that gets called with swipe activity state.
-   * Use this to disable parent ScrollView/FlatList scrolling while swiping.
-   */
-  onSwipeActiveChange?: (isActive: boolean) => void;
-
-  /**
    * Callback that gets called when the interaction starts, before `onChange`.
    *
    * @param rating The rating value at the start of the interaction.
@@ -190,8 +175,6 @@ const StarRating = ({
   emptyColor = color,
   step = 'half',
   enableSwiping = true,
-  swipeVerticalThreshold = 100,
-  onSwipeActiveChange,
   onRatingStart,
   onRatingEnd,
   animationConfig = defaultAnimationConfig,
@@ -206,10 +189,9 @@ const StarRating = ({
   accessibilityAdjustmentLabel = '%value% stars',
 }: StarRatingProps) => {
   const multiplier = step === 'quarter' ? 4 : step === 'half' ? 2 : 1;
-  const width = React.useRef<number>();
-  const swipeStartLocationX = React.useRef(0);
-  const hasExceededVerticalThreshold = React.useRef(false);
-  const isSwipeActive = React.useRef(false);
+  const containerRef = React.useRef<View>(null);
+  const width = React.useRef(0);
+  const containerX = React.useRef(0);
   const lastResolvedRating = React.useRef(rating);
   const [isInteracting, setInteracting] = React.useState(false);
   const [stagedRating, setStagedRating] = React.useState(rating);
@@ -218,12 +200,29 @@ const StarRating = ({
     lastResolvedRating.current = rating;
   }, [rating]);
 
+  const updateContainerMetrics = React.useCallback(() => {
+    containerRef.current?.measureInWindow((x, _y, measuredWidth) => {
+      containerX.current = x;
+      width.current = measuredWidth;
+    });
+  }, []);
+
   const panResponder = React.useMemo(() => {
-    const calculateRating = (x: number, isRTL = I18nManager.isRTL) => {
-      if (!width.current) return rating;
+    const calculateRating = (pageX: number, isRTL = I18nManager.isRTL) => {
+      if (!width.current) {
+        return rating;
+      }
+
+      const relativeX = Math.max(
+        0,
+        Math.min(pageX - containerX.current, width.current)
+      );
 
       if (isRTL) {
-        return calculateRating(width.current - x, false);
+        return calculateRating(
+          containerX.current + width.current - relativeX,
+          false
+        );
       }
 
       const newRating =
@@ -231,12 +230,13 @@ const StarRating = ({
           ? Math.max(
               0,
               Math.min(
-                Math.round((x / width.current) * maxStars * multiplier + 0.2) /
-                  multiplier,
+                Math.round(
+                  (relativeX / width.current) * maxStars * multiplier + 0.2
+                ) / multiplier,
                 maxStars
               )
             )
-          : Math.ceil((x / width.current) * maxStars);
+          : Math.ceil((relativeX / width.current) * maxStars);
 
       return newRating;
     };
@@ -248,92 +248,52 @@ const StarRating = ({
       }
     };
 
-    const setSwipeActive = (nextIsActive: boolean) => {
-      if (!enableSwiping) {
-        return;
-      }
-
-      if (isSwipeActive.current !== nextIsActive) {
-        isSwipeActive.current = nextIsActive;
-        onSwipeActiveChange?.(nextIsActive);
-      }
-    };
-
-    const resetSwipeState = () => {
-      hasExceededVerticalThreshold.current = false;
-      setSwipeActive(false);
-    };
-
     return PanResponder.create({
+      // Capture from touch start so parent scroll views cannot steal this gesture.
       onStartShouldSetPanResponder: () => true,
       onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2,
-      onMoveShouldSetPanResponderCapture: (_, gestureState) =>
-        Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2,
-      onPanResponderMove: (_, gestureState) => {
-        if (enableSwiping) {
-          if (
-            !hasExceededVerticalThreshold.current &&
-            Math.abs(gestureState.dy) > swipeVerticalThreshold
-          ) {
-            hasExceededVerticalThreshold.current = true;
-          }
-
-          if (hasExceededVerticalThreshold.current) {
-            return;
-          }
-
-          const locationX = swipeStartLocationX.current + gestureState.dx;
-          const newRating = calculateRating(locationX);
-          handleChange(newRating);
-        }
-      },
-      onPanResponderStart: (e) => {
-        swipeStartLocationX.current = e.nativeEvent.locationX;
-        hasExceededVerticalThreshold.current = false;
-        setSwipeActive(true);
-
-        const newRating = calculateRating(e.nativeEvent.locationX);
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderGrant: (e) => {
+        updateContainerMetrics();
+        const newRating = calculateRating(e.nativeEvent.pageX);
         onRatingStart?.(newRating);
         handleChange(newRating);
         setInteracting(true);
       },
-      onPanResponderEnd: (_, gestureState) => {
-        const locationX = swipeStartLocationX.current + gestureState.dx;
-        const newRating = hasExceededVerticalThreshold.current
-          ? lastResolvedRating.current
-          : calculateRating(locationX);
-
-        if (!hasExceededVerticalThreshold.current) {
+      onPanResponderMove: (_, gestureState) => {
+        if (enableSwiping) {
+          const newRating = calculateRating(gestureState.moveX);
           handleChange(newRating);
         }
-
-        onRatingEnd?.(newRating);
-
-        resetSwipeState();
+      },
+      onPanResponderRelease: (e) => {
+        const newRating = calculateRating(e.nativeEvent.pageX);
+        if (enableSwiping) {
+          handleChange(newRating);
+        }
+        onRatingEnd?.(enableSwiping ? newRating : lastResolvedRating.current);
 
         setTimeout(() => {
           setInteracting(false);
         }, animationConfig.delay || defaultAnimationConfig.delay);
       },
       onPanResponderTerminate: () => {
-        // called when user drags outside of the component
-        resetSwipeState();
+        // Keep interaction state deterministic even if the system cancels.
         setTimeout(() => {
           setInteracting(false);
         }, animationConfig.delay || defaultAnimationConfig.delay);
       },
+      // Keep the responder locked until release (Google Maps style drag).
       onPanResponderTerminationRequest: () => false,
       onShouldBlockNativeResponder: () => true,
     });
   }, [
+    updateContainerMetrics,
     rating,
     maxStars,
     onChange,
     enableSwiping,
-    swipeVerticalThreshold,
-    onSwipeActiveChange,
     onRatingStart,
     onRatingEnd,
     animationConfig.delay,
@@ -344,10 +304,12 @@ const StarRating = ({
   return (
     <View style={style}>
       <View
+        ref={containerRef}
         style={styles.starRating}
         {...panResponder.panHandlers}
         onLayout={(e) => {
           width.current = e.nativeEvent.layout.width;
+          updateContainerMetrics();
         }}
         testID={testID}
         accessible={true}

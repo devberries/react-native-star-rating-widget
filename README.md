@@ -27,26 +27,16 @@ const Example = () => {
 };
 ```
 
-To keep horizontal swipe rating responsive while temporarily blocking parent vertical scroll:
+`StarRating` captures the gesture on touch start and keeps control until release.
+This keeps horizontal dragging responsive even if the finger leaves the star bounds,
+while preventing parent scroll views from stealing the active rating gesture.
 
 ```js
-import { ScrollView } from 'react-native';
 import StarRating from 'react-native-star-rating-widget';
 
 const Example = () => {
   const [rating, setRating] = useState(0);
-  const [scrollEnabled, setScrollEnabled] = useState(true);
-
-  return (
-    <ScrollView scrollEnabled={scrollEnabled}>
-      <StarRating
-        rating={rating}
-        onChange={setRating}
-        swipeVerticalThreshold={100}
-        onSwipeActiveChange={(active) => setScrollEnabled(!active)}
-      />
-    </ScrollView>
-  );
+  return <StarRating rating={rating} onChange={setRating} />;
 };
 ```
 
@@ -66,29 +56,27 @@ See [example/src](example/src) for more examples.
 
 ### `StarRating` Props
 
-| Name                         | Type                                                                                                       | Default                                                                                              | Description                                                          |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| rating                       | number                                                                                                     | **REQUIRED**                                                                                         | Rating Value. Should be between 0 and `maxStars`                     |
-| onChange                     | (rating: number) => void                                                                                   | **REQUIRED**                                                                                         | called when rating changes                                           |
-| maxStars                     | number                                                                                                     | 5                                                                                                    | number of stars                                                      |
-| starSize                     | number                                                                                                     | 32                                                                                                   | star size                                                            |
-| color                        | string                                                                                                     | "#fdd835"                                                                                            | star color                                                           |
-| emptyColor                   | string                                                                                                     | same as `color`                                                                                      | empty star color                                                     |
-| style                        | object                                                                                                     | undefined                                                                                            | optional style                                                       |
-| starStyle                    | object                                                                                                     | undefined                                                                                            | optional star style                                                  |
-| step                         | "full" \| "half" \| "quarter"                                                                              | "half"                                                                                               | step size for rating - full stars, half stars, or quarter stars      |
-| enableSwiping                | boolean                                                                                                    | true                                                                                                 | enable or disable swiping                                            |
-| swipeVerticalThreshold       | number                                                                                                     | 100                                                                                                  | max vertical drift in px before current swipe stops changing rating  |
-| onSwipeActiveChange          | (isActive: boolean) => void                                                                                | undefined                                                                                            | called when swipe starts/ends, useful to toggle parent scrollEnabled |
-| onRatingStart                | (rating: number) => void                                                                                   | undefined                                                                                            | called when the interaction starts, before `onChange`                |
-| onRatingEnd                  | (rating: number) => void                                                                                   | undefined                                                                                            | called when the interaction starts, after `onChange`                 |
-| animationConfig              | see [AnimationConfig](#animationConfig)                                                                    | see [AnimationConfig](#animationConfig)                                                              | animation configuration object                                       |
-| StarIconComponent            | (props: { index: number; size: number; color: string; type: "full" \| "half" \| "empty"; }) => JSX.Element | [StarIcon](https://github.com/bviebahn/react-native-star-rating-widget/blob/master/src/StarIcon.tsx) | Icon component                                                       |
-| accessibilityLabel           | string                                                                                                     | star rating. %value% stars. use custom actions to set rating.                                        | The label used on the star component                                 |
-| accessabilityIncrementLabel  | string                                                                                                     | increment                                                                                            | The label for the increment action                                   |
-| accessabilityDecrementLabel  | string                                                                                                     | decrement                                                                                            | The label for the decrement action.                                  |
-| accessabilityActivateLabel   | string                                                                                                     | activate (default)                                                                                   | The label for the activate action.                                   |
-| accessibilityAdjustmentLabel | string                                                                                                     | %value% stars                                                                                        | The label that is announced after adjustment action                  |
+| Name                         | Type                                                                                                       | Default                                                                                              | Description                                                     |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| rating                       | number                                                                                                     | **REQUIRED**                                                                                         | Rating Value. Should be between 0 and `maxStars`                |
+| onChange                     | (rating: number) => void                                                                                   | **REQUIRED**                                                                                         | called when rating changes                                      |
+| maxStars                     | number                                                                                                     | 5                                                                                                    | number of stars                                                 |
+| starSize                     | number                                                                                                     | 32                                                                                                   | star size                                                       |
+| color                        | string                                                                                                     | "#fdd835"                                                                                            | star color                                                      |
+| emptyColor                   | string                                                                                                     | same as `color`                                                                                      | empty star color                                                |
+| style                        | object                                                                                                     | undefined                                                                                            | optional style                                                  |
+| starStyle                    | object                                                                                                     | undefined                                                                                            | optional star style                                             |
+| step                         | "full" \| "half" \| "quarter"                                                                              | "half"                                                                                               | step size for rating - full stars, half stars, or quarter stars |
+| enableSwiping                | boolean                                                                                                    | true                                                                                                 | enable or disable swiping                                       |
+| onRatingStart                | (rating: number) => void                                                                                   | undefined                                                                                            | called when the interaction starts, before `onChange`           |
+| onRatingEnd                  | (rating: number) => void                                                                                   | undefined                                                                                            | called when the interaction starts, after `onChange`            |
+| animationConfig              | see [AnimationConfig](#animationConfig)                                                                    | see [AnimationConfig](#animationConfig)                                                              | animation configuration object                                  |
+| StarIconComponent            | (props: { index: number; size: number; color: string; type: "full" \| "half" \| "empty"; }) => JSX.Element | [StarIcon](https://github.com/bviebahn/react-native-star-rating-widget/blob/master/src/StarIcon.tsx) | Icon component                                                  |
+| accessibilityLabel           | string                                                                                                     | star rating. %value% stars. use custom actions to set rating.                                        | The label used on the star component                            |
+| accessabilityIncrementLabel  | string                                                                                                     | increment                                                                                            | The label for the increment action                              |
+| accessabilityDecrementLabel  | string                                                                                                     | decrement                                                                                            | The label for the decrement action.                             |
+| accessabilityActivateLabel   | string                                                                                                     | activate (default)                                                                                   | The label for the activate action.                              |
+| accessibilityAdjustmentLabel | string                                                                                                     | %value% stars                                                                                        | The label that is announced after adjustment action             |
 
 ### `StarRatingDisplay` Props
 
